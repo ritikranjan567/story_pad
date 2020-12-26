@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  db:
+    container_name: story_pad_db
+    build: ./story_pad_db
+    restart: always
+    env_file: .env
+    environment:
+      - POSTGRES_MULTIPLE_DATABASES=${POSTGRES_DEV_DB},${POSTGRES_TEST_DB}
+    volumes: 
+      - story_pad_db:/var/lib/postgresql/data
+      - ./story_pad_db:/docker-entrypoint-initdb.d
+    networks:
+      - secured_net
+    ports: 
+      - ${DB_PORT}:${DB_PORT}
+  
+  api:
+    container_name: story_pad_api
+    build: ./story_pad_api
+    env_file: .env
+    volumes: 
+      - ./story_pad_api:/story_pad
+    ports: 
+      - "3000:3000"
+    networks: 
+      - secured_net
+      - api_interaction
+    depends_on: 
+      - db
+  
+  ui:
+    container_name: story_pad_ui
+    build: ./story_pad_ui
+    env_file: .env
+    volumes: 
+      - ./story_pad_ui:/story_pad
+    networks: 
+      - api_interaction
+    depends_on: 
+      - api
+    ports: 
+      - "3030:3000"
+
+volumes: 
+  story_pad_db:
+
+networks: 
+  secured_net:
+    external: false
+  api_interaction:
+
